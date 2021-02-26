@@ -45,7 +45,7 @@ for i in range(1, len(data.columns)):             #Column 1 is index
                 hs.append((col1, s, tp, fn, fp, tn))
                 
 hs = sorted(hs, reverse=True, key = lambda x: x[2])
-df1 = pd.DataFrame(l1, columns = ['Antecedent', 'Sensitivity', 'TP', 'FN', 'FP', 'TN'])
+df1 = pd.DataFrame(hs, columns = ['Antecedent', 'Sensitivity', 'TP', 'FN', 'FP', 'TN'])
 
 
 
