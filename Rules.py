@@ -50,15 +50,15 @@ df1 = pd.DataFrame(l1, columns = ['Antecedent', 'Sensitivity', 'TP', 'FN', 'FP',
 
 
 hs2 = []
-for ante1 in columns:                                                #Antecedent 1 will be from saved columns from previous rule
+for col1 in columns:                                                #Antecedent 1 will be from saved columns from previous rule
     for i in range(1,len(data.columns)):                             #Looping through all data columns
         
-        ante2 = data.columns[i]                                      #Columns name of antecedent 2, will skip if present in columns saved
-        if ante2 in columns:
+        col2 = data.columns[i]                                      #Columns name of antecedent 2, will skip if present in columns saved
+        if col2 in columns:
             continue
         
-        ante1, ante2 = data[ante1].tolist(), data[ante2].tolist()
-        ant = [ant1[i]*ant2[i] for i in range(len(ant1))]
+        ante1, ante2 = data[col1].tolist(), data[col2].tolist()
+        ant = [ante1[i]*ante2[i] for i in range(len(ante1))]
         
         s, tp, fn, fp, tn = sensitivity(ant, cons)
         if s>0.75 and tp>100:
