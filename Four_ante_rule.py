@@ -45,21 +45,21 @@ hs4 = []
 col4 = []
 for column1 in columns:
     for column2 in rcg_cols:
-        for i in reange(len(grit_cols)-1):
-            for j in range(i+1, len(grit(cols))):
+        for i in range(len(grit_cols)-1):
+            for j in range(i+1, len(grit_cols)):
             
             
-            column3, column4 = grit_cols[i], grit_cols[j]
+                column3, column4 = grit_cols[i], grit_cols[j]
            
-            #Name of antecedent 2 and 3
-            ante1, ante2, ante3, ante4 = data[column1].tolist(), data[column2].tolist(), data[column3].tolist(), data[column4].tolist()   
-            ante = [ante1[k]*ante2[k] for k in range(len(ante2))]
-            ante = [ante[k]*ante3[k] for k in range(len(ante2))]             #And operation between ante 1,2,3,4
-            ante = [ante[k]*ante4[k] for k in range(len(ante2))]             
+                #Name of antecedent 2 and 3
+                ante1, ante2, ante3, ante4 = data[column1].tolist(), data[column2].tolist(), data[column3].tolist(), data[column4].tolist()   
+                ante = [ante1[k]*ante2[k] for k in range(len(ante2))]
+                ante = [ante[k]*ante3[k] for k in range(len(ante2))]             #And operation between ante 1,2,3,4
+                ante = [ante[k]*ante4[k] for k in range(len(ante2))]             
             
-            s, tp, fn, fp, tn = sensitivity(ante, cons)
+                s, tp, fn, fp, tn = sensitivity(ante, cons)
             
-            if s>0.8 and tp > 30:
-                hs4.append((column1, column2, column3, column4, s, tp, fn, fp, tn))
+                if s>0.8 and tp > 30:
+                    hs4.append((column1, column2, column3, column4, s, tp, fn, fp, tn))
 hs4 = sorted(hs4, reverse=True, key = lambda x: x[4])
 df4 = pd.DataFrame(hs4, columns=['Antecedent1','Antecedent2', 'Antecedent3', 'Antecedent4' ,'Sensitivity', 'TP', 'FN', 'FP', 'TN'])
