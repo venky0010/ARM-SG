@@ -71,11 +71,6 @@ for column1 in columns:
         s, tp, fn, fp, tn = sensitivity(ante, cons)
         if s>0.5 and tp>30:
             df2.append((column1, column2, s, tp, fn, fp, tn))
-            cache2.append((column1, column2, ante))
-            col2.append(column1)
-            col2.append(column2)
-
-
 
 df3 = []
 col3 = []
