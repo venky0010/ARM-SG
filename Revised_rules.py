@@ -143,6 +143,13 @@ df3 = sorted(df3, reverse = True, key = lambda x: x[4])
 df4 = sorted(df4, reverse = True, key = lambda x: x[5])
 df5 = sorted(df5, reverse=True, key = lambda x: x[6])
 
+df1 = pd.DataFrame(df1, columns=['Antecedent1', 'Sensitivity', 'TP', 'FN', 'FP', 'TN'])
+df2 = pd.DataFrame(df2, columns=['Antecedent1', 'Antecedent2', 'Sensitivity', 'TP', 'FN', 'FP', 'TN'])
+df3 = pd.DataFrame(df3, columns=['Antecedent1', 'Antecedent2', 'Antecedent3', 'Sensitivity', 'TP', 'FN', 'FP', 'TN'])
+df4 = pd.DataFrame(df4, columns=['Antecedent1', 'Antecedent2', 'Antecedent3', 'Antecedent4', 'Sensitivity', 'TP', 'FN', 'FP', 'TN'])
+df5 = pd.DataFrame(df5, columns=['Antecedent1', 'Antecedent2', 'Antecedent3', 'Antecedent4', 'Antecedent5', 'Sensitivity', 'TP', 'FN', 'FP', 'TN'])
+
+
 df1.to_csv('ant1.csv')
 df2.to_csv('ant2.csv')
 df3.to_csv('ant3.csv')
