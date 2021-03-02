@@ -56,7 +56,7 @@ for column1 in columns:
     ant1 = data[column1].tolist()
     s, tp, fn, fp, tn = sensitivity(ant1, cons)
     if s>=0:
-        col1.append(column1)
+        
         df1.append((column1, s, tp, fn, fp, tn))
         
         
