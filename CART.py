@@ -60,6 +60,13 @@ def gini(rows):
             imp += p1*p2
     return imp
 
+def tpfn(rows):
+    
+    cons = [row[-1] for row in rows]
+    tp = sum(cons)
+    fn = len(rows)-tp
+    
+    return tp, fn
 
 def variance(rows):
     if len(rows) == 0: return 0
@@ -69,6 +76,27 @@ def variance(rows):
     variance = sum([(d-mean)**2 for d in data]) / len(data)
     return variance
 
+def search(rows, cols, columns):
+    
+    if len(rows) == 0:
+        return None
+    
+    print(columns)
+    index = int(input('Enter the index of the selected Column'))
+    selected_col = columns[index]
+    midbit=[]
+    for row in rows:
+        midbit.append(row[-1])    
+    tp=0
+    fn=0
+    
+    for i in range(len(midbit)):
+        if rows[i][index] == 1 and midbit[i] == 1:
+            tp+=1
+        elif rows[i][index] == 1 and midbit[i] == 0:
+            fn+=1       
+    return (selected_col, tp, fn)
+
 def frequency(rows, cols, columns):
     
     if len(rows) == 0:
@@ -77,7 +105,7 @@ def frequency(rows, cols, columns):
     recos = []
     for row in rows:
         midbit.append(row[-1])
-    
+    print(sum(midbit), len(rows))
     for col in range(cols):
         tp=0
         fn=0
@@ -113,7 +141,37 @@ def frequency(rows, cols, columns):
             bestCol = col
     return bestAttribute, bestSets, bestCol'''
     
+'''def freq(rows, evaluationFunction=entropy):
+    freq = []
+    bestGain = 0.0
+    bestAttribute = None
+    bestSets = None
+    bestCol = None
+    columnCount = len(rows[0]) - 1  # last column is the result/target column
+    for col in range(0, columnCount):
+            
+        columnValues = [row[col] for row in rows]
+        #unique values
+        lsUnique = list(set(columnValues))
+        for value in lsUnique:
+            (set1, set2) = divideSet(rows, col, value)
 
+            # Gain -- Entropy or Gini
+            p = float(len(set1)) / len(rows)
+            gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
+            if gain>bestGain and len(set1)>0 and len(set2)>0:
+                bestGain = gain
+                bestAttribute = (col, value)
+                bestSets = (set1, set2)
+                bestCol = col
+    if bestAttribute == None: continue
+    seen.append(bestAttribute[0])
+    show.append((i, bestCol, cols[bestAttribute[0]]))
+    recommendColumns.append((bestAttribute, bestGain, bestSets))
+    
+    '''
+    
+    
 def growDecisionTreeFrom(rows, evaluationFunction=entropy):
     """Grows and then returns a binary decision tree.
     evaluationFunction: entropy or gini"""
@@ -125,6 +183,8 @@ def growDecisionTreeFrom(rows, evaluationFunction=entropy):
     
     freq_list = frequency(rows, len(rows[0])-1, cols)
     print(freq_list)
+    #vals = search(rows, len(rows[0])-1, cols)
+    #print(vals)
     show=[]
     recommendColumns = []
     seen = []
@@ -145,7 +205,6 @@ def growDecisionTreeFrom(rows, evaluationFunction=entropy):
             lsUnique = list(set(columnValues))
             for value in lsUnique:
                 (set1, set2) = divideSet(rows, col, value)
-
             # Gain -- Entropy or Gini
                 p = float(len(set1)) / len(rows)
                 gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
@@ -159,13 +218,16 @@ def growDecisionTreeFrom(rows, evaluationFunction=entropy):
         show.append((i, bestCol, cols[bestAttribute[0]]))
         recommendColumns.append((bestAttribute, bestGain, bestSets))
     print(show)
-    if len(show) == 0:
-        dcY = {'impurity' : '%.3f' % currentScore, 'samples' : '%d' % len(rows)}
-        return DecisionTree(results=uniqueCounts(rows), summary=dcY)
-    index = int(input("enter index of column selected:"))
-    bestAttribute, bestGain, bestSets = recommendColumns[index]
     
-    dcY = {'impurity' : '%.3f' % currentScore, 'samples' : '%d' % len(rows)}
+    tp, fn = tpfn(rows)
+    
+    if len(show) == 0:
+        dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
+        return DecisionTree(results=uniqueCounts(rows), summary=dcY)
+    #index = int(input("enter index of column selected:"))
+    bestAttribute, bestGain, bestSets = recommendColumns[0]
+    
+    dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
     if bestGain > 0 and len(show)>0:
         trueBranch = growDecisionTreeFrom(bestSets[0], evaluationFunction)
         falseBranch = growDecisionTreeFrom(bestSets[1], evaluationFunction)
@@ -182,6 +244,7 @@ def plot(decisionTree):
         
         if decisionTree.results != None:  # leaf node
             lsX = [(x, y) for x, y in decisionTree.results.items()]
+           
             lsX.sort()
             szY = ', '.join(['%s: %s' % (x, y) for x, y in lsX])
             return szY
@@ -211,12 +274,14 @@ def dotgraph(decisionTree):
         if decisionTree.results != None:  # leaf node
             lsX = [(x, y) for x, y in decisionTree.results.items()]
             lsX.sort()
+            print(lsX)
             lsX = ['FN: %s' % (y) if x == 0 else 'TP: %s' %(y) for x, y in lsX]
             szY = ', '.join(['%s' % (x) for x in lsX])
+            print(szY)
             dcY = {"name": szY, "parent" : szParent}
             dcSummary = decisionTree.summary
-            dcNodes[iSplit].append(['leaf', dcY['name'], szParent, bBranch, dcSummary['impurity'],
-                                    dcSummary['samples']])
+            dcNodes[iSplit].append(['leaf', dcY['name'], szParent, bBranch, dcSummary['TP'],
+                                    dcSummary['FN']])
             return dcY
         else:
             szCol = 'Column %s' % decisionTree.col
@@ -229,8 +294,8 @@ def dotgraph(decisionTree):
             trueBranch = toString(iSplit+1, decisionTree.trueBranch, True, decision, indent + '\t\t')
             falseBranch = toString(iSplit+1, decisionTree.falseBranch, False, decision, indent + '\t\t')
             dcSummary = decisionTree.summary
-            dcNodes[iSplit].append([iSplit+1, decision, szParent, bBranch, dcSummary['impurity'],
-                                    dcSummary['samples']])
+            dcNodes[iSplit].append([iSplit+1, decision, szParent, bBranch, dcSummary['TP'],
+                                    dcSummary['FN']])
             return
 
     toString(0, decisionTree, None)
@@ -243,16 +308,17 @@ def dotgraph(decisionTree):
     for nSplit in range(len(dcNodes)):
         lsY = dcNodes[nSplit]
         for lsX in lsY:
+        
             iSplit, decision, szParent, bBranch, szImpurity, szSamples =lsX
             if type(iSplit) == int:
                 szSplit = '%d-%s' % (iSplit, decision)
                 dcParent[szSplit] = i_node
-                lsDot.append('%d [label=<%s<br/>impurity %s<br/>samples %s>, fillcolor="#e5813900"] ;' % (i_node,
+                lsDot.append('%d [label=<%s<br/>TP %s<br/>FN %s>, fillcolor="#e5813900"] ;' % (i_node,
                                         decision.replace('>=', '&ge;').replace('?', ''),
                                         szImpurity,
                                         szSamples))
             else:
-                lsDot.append('%d [label=<impurity %s<br/>samples %s<br/>class %s>, fillcolor="#e5813900"] ;' % (i_node,
+                lsDot.append('%d [label=<Impurity %s<br/>Samples %s<br/>FN %s>, fillcolor="#e5813900"] ;' % (i_node,
                                         szImpurity,
                                         szSamples,
                                         decision))
