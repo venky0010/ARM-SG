@@ -86,7 +86,8 @@ def search(rows, cols, columns):
     selected_col = columns[index]
     midbit=[]
     for row in rows:
-        midbit.append(row[-1])    
+        midbit.append(row[-1]) 
+        
     tp=0
     fn=0
     
@@ -123,71 +124,15 @@ def frequency(rows, cols, columns):
     print(recos[:5])
     
     
-'''def calculate_values(col, rows):
+def Entropy_Recos(rows, evaluationFunction=entropy):
     
-    columnValues = [row[col] for row in rows]
-        #unique values
-        lsUnique = list(set(columnValues))
-        for value in lsUnique:
-            (set1, set2) = divideSet(rows, col, value)
-
-            # Gain -- Entropy or Gini
-            #p = float(len(set1)) / len(rows)
-            #gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
-            #if gain>bestGain and len(set1)>0 and len(set2)>0:
-            bestGain = gain
-            bestAttribute = (col, value)
-            bestSets = (set1, set2)
-            bestCol = col
-    return bestAttribute, bestSets, bestCol'''
-    
-'''def freq(rows, evaluationFunction=entropy):
-    freq = []
-    bestGain = 0.0
-    bestAttribute = None
-    bestSets = None
-    bestCol = None
-    columnCount = len(rows[0]) - 1  # last column is the result/target column
-    for col in range(0, columnCount):
-            
-        columnValues = [row[col] for row in rows]
-        #unique values
-        lsUnique = list(set(columnValues))
-        for value in lsUnique:
-            (set1, set2) = divideSet(rows, col, value)
-
-            # Gain -- Entropy or Gini
-            p = float(len(set1)) / len(rows)
-            gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
-            if gain>bestGain and len(set1)>0 and len(set2)>0:
-                bestGain = gain
-                bestAttribute = (col, value)
-                bestSets = (set1, set2)
-                bestCol = col
-    if bestAttribute == None: continue
-    seen.append(bestAttribute[0])
-    show.append((i, bestCol, cols[bestAttribute[0]]))
-    recommendColumns.append((bestAttribute, bestGain, bestSets))
-    
-    '''
-    
-    
-def growDecisionTreeFrom(rows, evaluationFunction=entropy):
-    """Grows and then returns a binary decision tree.
-    evaluationFunction: entropy or gini"""
-
     if len(rows) == 0: return DecisionTree()
     currentScore = evaluationFunction(rows)
     data = pd.read_csv('cart11.csv')
-    cols = data.columns    
-    
-    freq_list = frequency(rows, len(rows[0])-1, cols)
-    print(freq_list)
-    #vals = search(rows, len(rows[0])-1, cols)
-    #print(vals)
-    show=[]
+    cols = data.columns
     recommendColumns = []
     seen = []
+    step = 2
     for i in range(5):
         
         bestGain = 0.0
@@ -195,6 +140,7 @@ def growDecisionTreeFrom(rows, evaluationFunction=entropy):
         bestSets = None
         bestCol = None
         columnCount = len(rows[0]) - 1  # last column is the result/target column
+        
         for col in range(0, columnCount):
             
             if col in seen:
@@ -205,7 +151,7 @@ def growDecisionTreeFrom(rows, evaluationFunction=entropy):
             lsUnique = list(set(columnValues))
             for value in lsUnique:
                 (set1, set2) = divideSet(rows, col, value)
-            # Gain -- Entropy or Gini
+                # Gain -- Entropy or Gini
                 p = float(len(set1)) / len(rows)
                 gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
                 if gain>bestGain and len(set1)>0 and len(set2)>0:
@@ -215,29 +161,134 @@ def growDecisionTreeFrom(rows, evaluationFunction=entropy):
                     bestCol = col
         if bestAttribute == None: continue
         seen.append(bestAttribute[0])
-        show.append((i, bestCol, cols[bestAttribute[0]]))
         recommendColumns.append((bestAttribute, bestGain, bestSets))
-    print(show)
+    
+    default_step = 1
+    scores = []
+    j=1
+    for i in recommendColumns:
+        bestAttribute, bestGain, bestSets = i
+        val1 = steps(bestSets[0], step, evaluationFunction)
+        val2 = steps(bestSets[1], step, evaluationFunction)
+        m = val1+val2
+        scores.append((bestAttribute, bestGain, bestSets, m))
+        j+=1
+        
+    scores = sorted(scores, reverse=True, key=lambda x: x[3])
+    show = []
+    j=1
+    for i in scores:
+        show.append((j, cols[i[0][0]]))
+        j+=1
+    return show, scores
+
+
+def steps(rows, step, evaluationFunction=entropy):
+    
+    if len(rows) == 0: return 0
+    currentScore = evaluationFunction(rows)
+    bestGain = 0.0
+    bestAttribute = None
+    bestSets = None
+    columnCount = len(rows[0]) - 1  # last column is the result/target column
+    for col in range(0, columnCount):
+        columnValues = [row[col] for row in rows]
+
+        #unique values
+        lsUnique = list(set(columnValues))
+
+        for value in lsUnique:
+            (set1, set2) = divideSet(rows, col, value)
+
+            # Gain -- Entropy or Gini
+            p = float(len(set1)) / len(rows)
+            gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
+            if gain>bestGain and len(set1)>0 and len(set2)>0:
+                bestGain = gain
+                bestAttribute = (col, value)
+                bestSets = (set1, set2)
+    
+    if step == 0:
+        return bestGain
+    
+    if bestGain > 0:
+        trueBranch = steps(bestSets[0], step-1, evaluationFunction)
+        falseBranch = steps(bestSets[1], step-1, evaluationFunction)
+        return max(trueBranch, falseBranch)
+    else:
+        return 0
+    
+def fast_forward(rows, evaluationFunction=entropy):
+    
+    if len(rows) == 0: return DecisionTree()
+    currentScore = evaluationFunction(rows)
+    bestGain = 0.0
+    bestAttribute = None
+    bestSets = None
+
+    columnCount = len(rows[0]) - 1  # last column is the result/target column
+    for col in range(0, columnCount):
+        columnValues = [row[col] for row in rows]
+
+        #unique values
+        lsUnique = list(set(columnValues))
+
+        for value in lsUnique:
+            (set1, set2) = divideSet(rows, col, value)
+
+            # Gain -- Entropy or Gini
+            p = float(len(set1)) / len(rows)
+            gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
+            if gain>bestGain and len(set1)>0 and len(set2)>0:
+                bestGain = gain
+                bestAttribute = (col, value)
+                bestSets = (set1, set2)
+    tp, fn = tpfn(rows)
+    dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
+    if bestGain > 0:
+        trueBranch = fast_forward(bestSets[0], evaluationFunction)
+        falseBranch = fast_forward(bestSets[1], evaluationFunction)
+        return DecisionTree(col=bestAttribute[0], value=bestAttribute[1], trueBranch=trueBranch,
+                            falseBranch=falseBranch, summary=dcY)
+    else:
+        return DecisionTree(results=uniqueCounts(rows), summary=dcY)
+    
+    
+def growDecisionTreeFrom(rows, evaluationFunction=entropy):
+    """Grows and then returns a binary decision tree.
+    evaluationFunction: entropy or gini"""
+    
+    data = pd.read_csv('cart11.csv')
+    cols = data.columns    
+    show, recommendColumns = Entropy_Recos(rows, evaluationFunction=entropy)
+    freq_list = frequency(rows, len(rows[0])-1, cols)
+    print(freq_list)
+    #vals = search(rows, len(rows[0])-1, cols)
+    #print(vals)
+    
+    inp = input("Enter the Play or Fast Forward")
+    
+    if inp.upper() == 'FAST FORWARD':
+        return fast_forward(rows, evaluationFunction=entropy)
+    
     
     tp, fn = tpfn(rows)
-    
     if len(show) == 0:
         dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
         return DecisionTree(results=uniqueCounts(rows), summary=dcY)
-    #index = int(input("enter index of column selected:"))
-    bestAttribute, bestGain, bestSets = recommendColumns[0]
+    index = int(input("enter index of column selected:"))
+    bestAttribute, bestGain, bestSets, m = recommendColumns[index]
     
     dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
     if bestGain > 0 and len(show)>0:
-        trueBranch = growDecisionTreeFrom(bestSets[0], evaluationFunction)
+        trueBranch = growDecisionTreeFrom(bestSets[0], evaluationFunction=entropy)
         falseBranch = growDecisionTreeFrom(bestSets[1], evaluationFunction)
         return DecisionTree(col=bestAttribute[0], value=bestAttribute[1], trueBranch=trueBranch,
                             falseBranch=falseBranch, summary=dcY)
     else:
         return DecisionTree(results=uniqueCounts(rows), summary=dcY)
 
-
-
+    
 def plot(decisionTree):
     """Plots the obtained decision tree. """
     def toString(decisionTree, indent=''):
@@ -318,7 +369,7 @@ def dotgraph(decisionTree):
                                         szImpurity,
                                         szSamples))
             else:
-                lsDot.append('%d [label=<Impurity %s<br/>Samples %s<br/>FN %s>, fillcolor="#e5813900"] ;' % (i_node,
+                lsDot.append('%d [label=<Impurity %s<br/>Samples %s<br/>%s>, fillcolor="#e5813900"] ;' % (i_node,
                                         szImpurity,
                                         szSamples,
                                         decision))
@@ -344,6 +395,8 @@ def dotgraph(decisionTree):
     return lsDot
 
 
+import pandas as pd
+
 def loadCSV(file):
     """Loads a CSV file and converts all floats and ints into basic datatypes."""
     def convertTypes(s):
@@ -362,8 +415,6 @@ def loadCSV(file):
                 dcHeader[szCol] = str(szY)
     return dcHeader, [[convertTypes(item) for item in row] for row in reader]
 
-import pandas as pd
-
 if __name__ == '__main__':
 
 
@@ -374,12 +425,11 @@ if __name__ == '__main__':
     decisionTree = growDecisionTreeFrom(trainingData, evaluationFunction=gini)
     #prune(decisionTree, 0.8, notify=True) # notify, when a branch is pruned (one time in this example)
     result = plot(decisionTree)
-    #print(result)
     lsDot = dotgraph(decisionTree)
     initial_lsDots=lsDot
     print(initial_lsDots)
     lsDot.append('}')
     dot_data = '\n'.join(lsDot)
     graph = pydotplus.graph_from_dot_data(dot_data)
-    graph.write_pdf("iris0.pdf")
-    graph.write_png("iris0.png")
+    graph.write_pdf("iris1.pdf")
+    graph.write_png("iris1.png")
