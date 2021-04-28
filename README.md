@@ -1,3 +1,3 @@
 # ARM-SG
 
-Association Rule Mining 
+Association Rule Mining. Decision Tree. CART-hybrid
