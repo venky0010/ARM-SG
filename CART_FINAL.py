@@ -232,39 +232,22 @@ def fastforward(rows, params, raw, columns, evaluationFunction=entropy):
     #data = pd.read_csv('cart11.csv')
     #columns = data.columns
     cols = len(rows[0])-1
-    recomsF = frequency(rows, columns, raw, thresh)
     recomsE = Entropy_R(rows, step, thresh, columns, raw, evaluationFunction)
     
-    #recomsS = searchable_list(rows, columns)
     tp, fn = tpfn(rows)
     dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
-    colF, columnF, tpF, fnF = recomsF[0]
-    #print(tpF, fnF)
-    set1F, set2F = divideSet(rows, cols, 1)
-    
-    if tpF+fnF > 2 and fnF/(tpF+fnF)>0.7:
-        #print(tpF, fnF)
-        if len(set1F)>0 and len(set2F)>0:
-            trueBranch = fastforward(set1F, params, raw, columns, evaluationFunction)
-            falseBranch = fastforward(set2F, params, raw, columns, evaluationFunction)
-            return DecisionTree(col=colF, value=1, trueBranch=trueBranch,
-                            falseBranch=falseBranch, summary=dcY)
-        else:
-            return DecisionTree(results=uniqueCounts(rows), summary=dcY)
         
+    if len(recomsE) == 0:
+        return DecisionTree(results=uniqueCounts(rows), summary=dcY)
+    gainE, colE, columnE, valueE, set1E, set2E = recomsE[0]
+    #print(gainE)
+    if gainE > 0 and len(set1E)>0 and len(set2E)>0:
+        trueBranch = fastforward(set1E, params, raw, columns, evaluationFunction)
+        falseBranch = fastforward(set2E, params, raw, columns, evaluationFunction)
+        return DecisionTree(col=colE, value=valueE, trueBranch=trueBranch,
+                        falseBranch=falseBranch, summary=dcY)
     else:
-        if len(recomsE) == 0:
-            return DecisionTree(results=uniqueCounts(rows), summary=dcY)
-        gainE, colE, columnE, valueE, set1E, set2E = recomsE[0]
-        #print(gainE)
-        if gainE > 0 and len(set1E)>0 and len(set2E)>0:
-            trueBranch = fastforward(set1E, params, raw, columns, evaluationFunction)
-            falseBranch = fastforward(set2E, params, raw, columns, evaluationFunction)
-            return DecisionTree(col=colE, value=valueE, trueBranch=trueBranch,
-                            falseBranch=falseBranch, summary=dcY)
-        else:
-            return DecisionTree(results=uniqueCounts(rows), summary=dcY)
-          
+        return DecisionTree(results=uniqueCounts(rows), summary=dcY)
        
 def plot(decisionTree):
     """Plots the obtained decision tree. """
