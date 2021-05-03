@@ -67,13 +67,43 @@ def tpfn(rows):
     fn = len(rows)-tp
     return tp, fn
 
+def diversity(recoms, raw, thresh):
+    
+    if thresh > 4:
+        return recoms
+    
+    table_seen = {}
+    col_seen = {}
+    r = []
+    for i in recoms:
+        col = i[1]
+        for column in raw:
+            if re.search(column, col):
+                
+                if column not in col_seen:
+                    col_seen[column] = 1
+                    r.append(i)
+                    
+                elif col_seen[column] >= thresh:
+                    print('greater than thresh', col)
+                    break
+                    
+                else:
+                    col_seen[column]+=1
+                    r.append(i)
+                    
+        if len(r) == 5:
+            break
+    return r 
+
 def frequency(rows, columns, raw, thresh):
     
     cols = len(rows[0])-1
     cons = [row[-1] for row in rows]
     recoms = []
     for col in range(cols):
-
+        if columns[col] == 'NOT_PEC_AND_QTZ_SOURCE_APPN_IDS_MI':
+            continue
         tp, fn = 0, 0
         row = [row[col] for row in rows]
         for i in range(len(cons)):
@@ -84,7 +114,8 @@ def frequency(rows, columns, raw, thresh):
         recoms.append((col, columns[col], tp, fn))
     
     recoms = sorted(recoms, reverse=True, key = lambda x : x[2])
-    return recoms[:5]
+    recoms = diversity(recoms, raw, thresh)
+    return recoms
 
 def searchable_list(rows, columns):
     
@@ -155,9 +186,10 @@ def Entropy_R(rows, step, thresh, columns, raw, evaluationFunction=entropy):
             gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
             if len(set1)>0 and len(set2)>0:
                 
-                recoms1.append((gain, col, columns[col], value, set1, set2))
+                recoms1.append((col, columns[col], gain, value, set1, set2))
             
-    recoms1 = sorted(recoms1, reverse=True, key = lambda x: x[0])
+    recoms1 = sorted(recoms1, reverse=True, key = lambda x: x[2])
+    recoms1 = diversity(recoms1, raw, thresh)
     recoms = []
     if step == 2:
         
