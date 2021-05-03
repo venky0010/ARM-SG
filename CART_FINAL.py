@@ -70,10 +70,8 @@ def tpfn(rows):
 def diversity(recoms, raw, thresh):
 
     if thresh > 4:
-        return recoms
-    
-    table_seen = {}
-    col_seen = {}
+        return recoms[:5]
+  
     r = []
     for i in recoms:
         col = i[1]
