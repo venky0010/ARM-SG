@@ -68,7 +68,7 @@ def tpfn(rows):
     return tp, fn
 
 def diversity(recoms, raw, thresh):
-    
+
     if thresh > 4:
         return recoms
     
@@ -80,21 +80,16 @@ def diversity(recoms, raw, thresh):
         for column in raw:
             if re.search(column, col):
                 
-                if column not in col_seen:
-                    col_seen[column] = 1
-                    r.append(i)
-                    
-                elif col_seen[column] >= thresh:
-                    print('greater than thresh', col)
+                if raw[column] > thresh:
                     break
-                    
-                else:
-                    col_seen[column]+=1
+                elif raw[column] <= thresh:
                     r.append(i)
+                    raw[column]+=1
+                    break
                     
         if len(r) == 5:
             break
-    return r 
+    return r
 
 def frequency(rows, columns, raw, thresh):
     
