@@ -1,3 +1,4 @@
+import re
 import csv
 import numpy as np
 import pandas as pd
@@ -136,9 +137,7 @@ def diversity(recommendation, column_thresh, table_thresh):
                 else:
                     column_seen[c]+=1
                     recos.append(index)
-                    #print(variable)
                     break
-        print(len(recos))
         
     recos_final = []
     for index in recos:
@@ -150,9 +149,8 @@ def diversity(recommendation, column_thresh, table_thresh):
                 else:
                     table_seen[c]+=1
                     recos_final.append(index)
-                    print(variable)
                     break
-        print(len(recos_final))
+
         if len(recos_final) == 5:
             return recos_final[:5]
         
@@ -181,7 +179,8 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
             gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
             if gain > bestGain and len(set1)>0 and len(set2)>0:
                 recoms.append((columns[col], col, gain, value, set1, set2))
-                
+    if len(recoms) == 0:
+        return []
     recoms = sorted(recoms, reverse=True, key = lambda x: x[2])
     recoms = diversity(recoms, column_diversity, table_diversity)
     recoms = [columns[i[1]] for i in recoms[:5]]
@@ -194,8 +193,8 @@ def Frequency(rows, columns, parameters, dictionary):
     cons = [row[-1] for row in rows]
     recoms = []
     for col in range(cols):
-        if columns[col] == 'NOT_PEC_AND_QTZ_SOURCE_APPN_IDS_MI':
-            continue
+        #if columns[col] == 'NOT_PEC_AND_QTZ_SOURCE_APPN_IDS_MI':
+            #continue
         tp, fn = 0, 0
         row = [row[col] for row in rows]
         for i in range(len(cons)):
@@ -210,7 +209,7 @@ def Frequency(rows, columns, parameters, dictionary):
 
   
 #SPLIT starts here
-def SPLIT(node_number, variables, columns, dictionary):
+def SPLIT(node_number, variables, columns, dictionary, evaluationFunction=entropy):
     
     rows = dictionary[node_number]
     currentScore = evaluationFunction(rows)
@@ -220,27 +219,27 @@ def SPLIT(node_number, variables, columns, dictionary):
     var = None
     if len(variables) == 2:
         if fn/(tp+fn)>0.8:
-            index = columns.index(variable[1])
+            index = columns.tolist().index(variables[1])
             (set1, set2) = divideSet(rows, index, value=1)
-            var = variable[1]
+            var = variables[1]
         else:
-            index = columns.index(variables[0])
+            index = columns.tolist().index(variables[0])
             (set1, set2) = divideSet(rows, index, value=1)
-            var = variable[0]
+            var = variables[0]
         nn1 , nn2 = 2*node_number, 2*node_number + 1
         dictionary[nn1], dictionary[nn2] = set1, set2       
         return var, currentScore, tp, fn, nn1, nn2
     
     #When a variable from the recommendation or searchable list is selected
-    index = columns.index(variable[0])
+    index = columns.tolist().index(variables[0])
     (set1, set2) = divideSet(rows, index, value=1)
     nn1 , nn2 = 2*node_number, 2*node_number + 1
     dictionary[nn1], dictionary[nn2] = set1, set2
-    return variable[0], currentScore, tp, fn, nn1, nn2
+    return variables[0], currentScore, tp, fn, nn1, nn2
   
 
 #CLICK starts here
-def click(node_number, nodes, columns, parameters, dictionary):
+def CLICK(node_number, nodes, columns, parameters, dictionary):
     
     rows = dictionary[node_number]
     if len(nodes) != 0:
@@ -251,17 +250,24 @@ def click(node_number, nodes, columns, parameters, dictionary):
     return reco1, reco2
   
 #PROCESS Starts here
-dictionary = {}
-def PROCESS(antecedents, consequent, parameters, ref):
+
+def PROCESS(antecedents, consequent, params, ref):
     
     rcgdata = 0
     gritdata = pd.read_csv('0204Bin.csv')
     rcrdata = 0
     operdata = 0
     
+    #Defining Global Variables
+    global dictionary
+    global columns
+    global parameters
+    
     data = {'OPER': operdata, 'RCG': rcgdata, 'GRIT': gritdata, 'RCR': rcrdata}
     bindata = data[ref]
-    
+    parameters = params
+    print(parameters)
+    columns = bindata.columns
     #AND operation on antecedents
     for i in antecedents: 
         bindata = bindata[bindata[i] == 1]
@@ -273,4 +279,5 @@ def PROCESS(antecedents, consequent, parameters, ref):
     
     bindata = [[int(i) for i in bindata.iloc[j].tolist()] for j in range(len(bindata))]
     dictionary[1] = bindata
-    return  bindata
+  
+    return 1
