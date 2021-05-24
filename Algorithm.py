@@ -70,6 +70,33 @@ def tpfn(rows):
     fn = len(rows)-tp
     return tp, fn
 
+def steps(rows, step, evaluationFunction=entropy):
+    
+    if len(rows) == 0: return 0
+    currentScore = evaluationFunction(rows)
+    bestGain = 0.0
+    bestAttribute = None
+    bestSets = None
+    columnCount = len(rows[0]) - 1  # last column is the result/target column
+    for col in range(0, columnCount):
+        columnValues = [row[col] for row in rows]
+
+        #unique values
+        lsUnique = list(set(columnValues))
+
+        for value in lsUnique:
+            (set1, set2) = divideSet(rows, col, value)
+
+            # Gain -- Entropy or Gini
+            p = float(len(set1)) / len(rows)
+            gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
+            if gain>bestGain and len(set1)>0 and len(set2)>0:
+                bestGain = gain
+                bestAttribute = (col, value)
+                bestSets = (set1, set2)
+
+    return bestGain
+
 #Fast Forward Starts here
 def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy):
     rows = dictionary[node_number]
@@ -147,7 +174,7 @@ def diversity(recommendation, column_thresh, table_thresh):
                                                 
 def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
     
-    column_diversity, table_diversity, steps = parameters
+    column_diversity, table_diversity, step = parameters
     currentScore = evaluationFunction(rows)
     bestGain = 0.0
     bestAttribute = None
@@ -172,11 +199,25 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
         return []
     recoms = sorted(recoms, reverse=True, key = lambda x: x[2])
     recoms = diversity(recoms, column_diversity, table_diversity)
+    
+    recom_changed=[]
+    if step == 2:
+        for i in recoms:
+            print(recoms)
+            column, col, gain, value, set1, set2 = i
+            s1 = steps(set1, step-1, evaluationFunction)
+            s2 = steps(set2, step-1, evaluationFunction)
+            recom_changed.append((gain+s1+s2, column, col, value, set1, set2))
+        recom_changed = sorted(recom_changed, reverse=True, key = lambda x: x[0])
+        recom_changed = [columns[i[1]] for i in recoms[:5]]
+        return recom_changed
+    
     recoms = [columns[i[1]] for i in recoms[:5]]
     return recoms
     
 def Frequency(rows, columns, parameters, dictionary):
     
+    column_diversity, table_diversity, step = parameters
     cols = len(rows[0])-1
     cons = [row[-1] for row in rows]
     recoms = []
@@ -193,7 +234,8 @@ def Frequency(rows, columns, parameters, dictionary):
         recoms.append((columns[col], col, tp, fn))
     
     recoms = sorted(recoms, reverse=True, key = lambda x : x[2]+x[3])
-    return recoms[:5]
+    recoms = diversity(recoms, column_diversity, table_diversity)
+    return recoms
 
   
 #SPLIT starts here
