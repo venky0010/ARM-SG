@@ -71,8 +71,8 @@ def tpfn(rows):
     return tp, fn
 
 #Fast Forward Starts here
-def Fast_Forward_(rows, dictionary, nodes, node_number, evaluationFunction=entropy):
-    print(node_number)
+def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy):
+    rows = dictionary[node_number]
     if len(rows) == 0: return DecisionTree()
     currentScore = evaluationFunction(rows)
     bestGain = 0.0
@@ -109,8 +109,8 @@ def Fast_Forward_(rows, dictionary, nodes, node_number, evaluationFunction=entro
         dictionary[nn1]=bestSets[0]
         dictionary[nn2]=bestSets[1]
         
-        trueBranch = Fast_Forward_(bestSets[0], dictionary, nodes, nn1, evaluationFunction)
-        falseBranch = Fast_Forward_(bestSets[1], dictionary, nodes, nn2, evaluationFunction)
+        trueBranch = Fast_Forward(nn1, parameters, dictionary, evaluationFunction)
+        falseBranch = Fast_Forward(nn2, parameters, dictionary, evaluationFunction)
         return DecisionTree(col=bestAttribute[0], value=bestAttribute[1],  trueBranch=trueBranch,
                             falseBranch=falseBranch, summary=dcY)
     else:
@@ -130,32 +130,21 @@ def diversity(recommendation, column_thresh, table_thresh):
     recos = []
     for index in recommendation:
         variable = index[0]
-        for c in column:
-            if re.search(c, variable):
-                if column_seen[c]>column_thresh:
+        print(variable)
+        for t in table:
+            if re.search(t, variable):
+                if table_seen[t] > table_thresh:
                     break
-                else:
-                    column_seen[c]+=1
-                    recos.append(index)
-                    break
-        
-    recos_final = []
-    for index in recos:
-        variable = index[0]
-        for c in table:
-            if re.search(c, variable):
-                if table_seen[c]>table_thresh:
-                    break
-                else:
-                    table_seen[c]+=1
-                    recos_final.append(index)
-                    break
-
-        if len(recos_final) == 5:
-            return recos_final[:5]
-        
-                    
-
+                table_seen[t]+=1
+                for c in column:
+                    if re.search(c, variable):
+                        if column_seen[c]>column_thresh:
+                            break
+                        column_seen[c]+=1
+                        recos.append(index)
+                        if len(recos)==5:
+                            return recos
+                                                
 def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
     
     column_diversity, table_diversity, steps = parameters
@@ -184,7 +173,6 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
     recoms = sorted(recoms, reverse=True, key = lambda x: x[2])
     recoms = diversity(recoms, column_diversity, table_diversity)
     recoms = [columns[i[1]] for i in recoms[:5]]
-    
     return recoms
     
 def Frequency(rows, columns, parameters, dictionary):
@@ -204,7 +192,7 @@ def Frequency(rows, columns, parameters, dictionary):
                 fn+=1
         recoms.append((columns[col], col, tp, fn))
     
-    recoms = sorted(recoms, reverse=True, key = lambda x : x[2])
+    recoms = sorted(recoms, reverse=True, key = lambda x : x[2]+x[3])
     return recoms[:5]
 
   
