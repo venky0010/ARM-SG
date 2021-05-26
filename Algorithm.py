@@ -124,11 +124,9 @@ def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy
                 bestGain = gain
                 bestAttribute = (col, value)
                 bestSets = (set1, set2)
-          
                 
     tp, fn = tpfn(rows)
-
-    dcY = {'Impurity': '%0.001f' %currentScore, 'TP' : '%d' % tp, 'FN' : '%d' % node_number}
+    dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
     if bestGain > 0:
 
         nn1 = 2*node_number
@@ -157,7 +155,6 @@ def diversity(recommendation, column_thresh, table_thresh):
     recos = []
     for index in recommendation:
         variable = index[0]
-        print(variable)
         for t in table:
             if re.search(t, variable):
                 if table_seen[t] > table_thresh:
@@ -203,7 +200,6 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
     recom_changed=[]
     if step == 2:
         for i in recoms:
-            print(recoms)
             column, col, gain, value, set1, set2 = i
             s1 = steps(set1, step-1, evaluationFunction)
             s2 = steps(set2, step-1, evaluationFunction)
@@ -235,6 +231,7 @@ def Frequency(rows, columns, parameters, dictionary):
     
     recoms = sorted(recoms, reverse=True, key = lambda x : x[2]+x[3])
     recoms = diversity(recoms, column_diversity, table_diversity)
+    recoms = [i[0] for i in recoms]
     return recoms
 
   
@@ -257,15 +254,19 @@ def SPLIT(node_number, variables, columns, dictionary, evaluationFunction=entrop
             (set1, set2) = divideSet(rows, index, value=1)
             var = variables[0]
         nn1 , nn2 = 2*node_number, 2*node_number + 1
-        dictionary[nn1], dictionary[nn2] = set1, set2       
-        return var, currentScore, tp, fn, nn1, nn2
+        dictionary[nn1], dictionary[nn2] = set1, set2 
+        tp1, fn1 = tpfn(set1)
+        tp2, fn2 = tpfn(set2)
+        return var, currentScore, nn1, tp1, fn1, nn2, tp2, fn2
     
     #When a variable from the recommendation or searchable list is selected
     index = columns.tolist().index(variables[0])
     (set1, set2) = divideSet(rows, index, value=1)
     nn1 , nn2 = 2*node_number, 2*node_number + 1
     dictionary[nn1], dictionary[nn2] = set1, set2
-    return variables[0], currentScore, tp, fn, nn1, nn2
+    tp1, fn1 = tpfn(set1)
+    tp2, fn2 = tpfn(set2)
+    return variables[0], currentScore, nn1, tp1, fn1, nn2, tp2, fn2
   
 
 #CLICK starts here
@@ -280,23 +281,22 @@ def CLICK(node_number, nodes, columns, parameters, dictionary):
     return reco1, reco2
   
 #PROCESS Starts here
-
 def PROCESS(antecedents, consequent, params, ref):
     
     rcgdata = 0
     gritdata = pd.read_csv('0204Bin.csv')
-    rcrdata = 0
+    rcrdata = pd.read_csv('binary.csv')
     operdata = 0
     
     #Defining Global Variables
     global dictionary
     global columns
     global parameters
+    dictionary = {}
     
     data = {'OPER': operdata, 'RCG': rcgdata, 'GRIT': gritdata, 'RCR': rcrdata}
     bindata = data[ref]
     parameters = params
-    print(parameters)
     columns = bindata.columns
     #AND operation on antecedents
     for i in antecedents: 
@@ -309,5 +309,4 @@ def PROCESS(antecedents, consequent, params, ref):
     
     bindata = [[int(i) for i in bindata.iloc[j].tolist()] for j in range(len(bindata))]
     dictionary[1] = bindata
-  
     return 1
