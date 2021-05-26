@@ -92,8 +92,6 @@ def steps(rows, step, evaluationFunction=entropy):
             gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
             if gain>bestGain and len(set1)>0 and len(set2)>0:
                 bestGain = gain
-                bestAttribute = (col, value)
-                bestSets = (set1, set2)
 
     return bestGain
 
@@ -205,7 +203,7 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
             s2 = steps(set2, step-1, evaluationFunction)
             recom_changed.append((gain+s1+s2, column, col, value, set1, set2))
         recom_changed = sorted(recom_changed, reverse=True, key = lambda x: x[0])
-        recom_changed = [columns[i[1]] for i in recoms[:5]]
+        recom_changed = [i[1] for i in recom_changed[:5]]
         return recom_changed
     
     recoms = [columns[i[1]] for i in recoms[:5]]
@@ -284,8 +282,8 @@ def CLICK(node_number, nodes, columns, parameters, dictionary):
 def PROCESS(antecedents, consequent, params, ref):
     
     rcgdata = 0
-    gritdata = pd.read_csv('0204Bin.csv')
-    rcrdata = pd.read_csv('binary.csv')
+    gritdata = pd.read_csv('interco.csv')
+    rcrdata = pd.read_csv('rcr.csv')
     operdata = 0
     
     #Defining Global Variables
