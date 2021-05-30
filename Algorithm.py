@@ -295,7 +295,6 @@ def CLICK(node_number, nodes, columns, parameters, dictionary):
     rows = dictionary[node_number]
     if len(nodes) != 0:
         for node in nodes:
-            seen.pop(node)
             dictionary.pop(node)
     reco1 = Entropy_(rows, dictionary, columns, parameters, evaluationFunction=gini)
     reco2 = Frequency(rows, node_number, columns, parameters, dictionary)
