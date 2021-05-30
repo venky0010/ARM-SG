@@ -123,6 +123,7 @@ def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy
                 bestAttribute = (col, value)
                 bestSets = (set1, set2)
                 
+    seen[node_number] = bestAttribute[0]          
     tp, fn = tpfn(rows)
     dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
     if bestGain > 0:
@@ -145,21 +146,21 @@ def diversity(recommendation, column_thresh, table_thresh):
     
     if (table_thresh == 0 or table_thresh >5) and (column_thresh == 0 or column_thresh >= 5):
         return recommendation[:5]
-    column = pd.read_csv('0204Raw.csv').columns[1:]
-    column_seen = {i: 0 for i in column}
+    column = pd.read_csv('0204Raw.csv').columns[1:] #Reading columns from raw file
+    column_seen = {i: 0 for i in column}            #Keeps counter for column seen
     table = ['OPER', 'RCG', 'GRIT', 'RCR']
-    table_seen = {i: 0 for i in table}
+    table_seen = {i: 0 for i in table}              #Keeps counter for table seen
     
     recos = []
     for index in recommendation:
         variable = index[0]
         for t in table:
-            if re.search(t, variable):
+            if re.search(t, variable):              #Check table name in variable
                 if table_seen[t] > table_thresh:
                     break
                 table_seen[t]+=1
                 for c in column:
-                    if re.search(c, variable):
+                    if re.search(c, variable):      #Check column name in variable
                         if column_seen[c]>column_thresh:
                             break
                         column_seen[c]+=1
@@ -181,7 +182,7 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
         columnValues = [row[col] for row in rows]
 
         #unique values
-        lsUnique = list(set(columnValues))
+        lsUnique = list(set(columnValues))           
 
         for value in lsUnique:
             (set1, set2) = divideSet(rows, col, value)
@@ -189,35 +190,50 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
             p = float(len(set1)) / len(rows)
             gain = currentScore - p*evaluationFunction(set1) - (1-p)*evaluationFunction(set2)
             if gain > bestGain and len(set1)>0 and len(set2)>0:
-                recoms.append((columns[col], col, gain, value, set1, set2))
+                recoms.append((columns[col], col, gain, value, set1, set2)) #Append the tuple in list
     if len(recoms) == 0:
         return []
-    recoms = sorted(recoms, reverse=True, key = lambda x: x[2])
+    recoms = sorted(recoms, reverse=True, key = lambda x: x[2])            #sort the recommendations based on value at 2 index inside the tuple
     recoms = diversity(recoms, column_diversity, table_diversity)
     
-    recom_changed=[]
+    recom_changed=[]                                                       
     if step == 2:
         for i in recoms:
             column, col, gain, value, set1, set2 = i
             s1 = steps(set1, step-1, evaluationFunction)
             s2 = steps(set2, step-1, evaluationFunction)
             recom_changed.append((gain+s1+s2, column, col, value, set1, set2))
-        recom_changed = sorted(recom_changed, reverse=True, key = lambda x: x[0])
+        recom_changed = sorted(recom_changed, reverse=True, key = lambda x: x[0])  #Sort recommendations based on value at index 0
         recom_changed = [i[1] for i in recom_changed[:5]]
         return recom_changed
     
     recoms = [columns[i[1]] for i in recoms[:5]]
     return recoms
     
-def Frequency(rows, columns, parameters, dictionary):
+def Frequency(rows, node_number, columns, parameters, dictionary):
     
+    tp, fn = tpfn(rows)
+    if fn == 0:
+        return []
     column_diversity, table_diversity, step = parameters
     cols = len(rows[0])-1
     cons = [row[-1] for row in rows]
     recoms = []
-    for col in range(cols):
-        #if columns[col] == 'NOT_PEC_AND_QTZ_SOURCE_APPN_IDS_MI':
-            #continue
+    
+    parents = []
+    x = [node_number]
+    for i in x:
+        if i == 1:
+            break
+        p = int(i/2)
+        x.append(p)
+        parents.append(seen[p])
+    print(parents)
+    
+    for col in range(cols):                                      #Loop through all the columns                         
+        
+        if col in parents:
+            continue
         tp, fn = 0, 0
         row = [row[col] for row in rows]
         for i in range(len(cons)):
@@ -225,9 +241,13 @@ def Frequency(rows, columns, parameters, dictionary):
                 tp+=1
             elif row[i] == 1 and cons[i] == 0:
                 fn+=1
-        recoms.append((columns[col], col, tp, fn))
+        if tp <= 1:
+            recoms.append((columns[col], col, tp, fn, fn))
+            continue
+        recoms.append((columns[col], col, tp, fn, fn/tp))
+        
     
-    recoms = sorted(recoms, reverse=True, key = lambda x : x[2]+x[3])
+    recoms = sorted(recoms, reverse=True, key = lambda x : x[4])  #Sort the recommendations
     recoms = diversity(recoms, column_diversity, table_diversity)
     recoms = [i[0] for i in recoms]
     return recoms
@@ -243,12 +263,14 @@ def SPLIT(node_number, variables, columns, dictionary, evaluationFunction=entrop
     #When PLAY is pressed
     var = None
     if len(variables) == 2:
-        if fn/(tp+fn)>0.8:
-            index = columns.tolist().index(variables[1])
-            (set1, set2) = divideSet(rows, index, value=1)
+        if fn/(tp+fn)>0.8 and (fn>5 or tp+fn>20):
+            index = columns.tolist().index(variables[1])     #extract the index of column name in the list
+            seen[node_number]=index
+            (set1, set2) = divideSet(rows, index, value=1)   #Divide the rows in True and False branch
             var = variables[1]
         else:
             index = columns.tolist().index(variables[0])
+            seen[node_number]=index
             (set1, set2) = divideSet(rows, index, value=1)
             var = variables[0]
         nn1 , nn2 = 2*node_number, 2*node_number + 1
@@ -259,13 +281,13 @@ def SPLIT(node_number, variables, columns, dictionary, evaluationFunction=entrop
     
     #When a variable from the recommendation or searchable list is selected
     index = columns.tolist().index(variables[0])
+    seen[node_number]=index
     (set1, set2) = divideSet(rows, index, value=1)
     nn1 , nn2 = 2*node_number, 2*node_number + 1
     dictionary[nn1], dictionary[nn2] = set1, set2
     tp1, fn1 = tpfn(set1)
     tp2, fn2 = tpfn(set2)
     return variables[0], currentScore, nn1, tp1, fn1, nn2, tp2, fn2
-  
 
 #CLICK starts here
 def CLICK(node_number, nodes, columns, parameters, dictionary):
@@ -273,9 +295,10 @@ def CLICK(node_number, nodes, columns, parameters, dictionary):
     rows = dictionary[node_number]
     if len(nodes) != 0:
         for node in nodes:
+            seen.pop(node)
             dictionary.pop(node)
     reco1 = Entropy_(rows, dictionary, columns, parameters, evaluationFunction=gini)
-    reco2 = Frequency(rows, columns, parameters, dictionary)
+    reco2 = Frequency(rows, node_number, columns, parameters, dictionary)
     return reco1, reco2
   
 #PROCESS Starts here
@@ -290,6 +313,8 @@ def PROCESS(antecedents, consequent, params, ref):
     global dictionary
     global columns
     global parameters
+    global seen
+    seen = {}
     dictionary = {}
     
     data = {'OPER': operdata, 'RCG': rcgdata, 'GRIT': gritdata, 'RCR': rcrdata}
