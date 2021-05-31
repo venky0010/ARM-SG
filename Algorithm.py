@@ -20,11 +20,11 @@ class DecisionTree:
 def divideSet(rows, column, value):
     splittingFunction = None
     if isinstance(value, int) or isinstance(value, float): # for int and float values
-        splittingFunction = lambda row : row[column] >= value
+        splittingFunction = lambda row : row[column] >= value                          #check if col = 1 or 0 and split the rows accordingly
     else: # for strings
         splittingFunction = lambda row : row[column] == value
-    list1 = [row for row in rows if splittingFunction(row)]
-    list2 = [row for row in rows if not splittingFunction(row)]
+    list1 = [row for row in rows if splittingFunction(row)]                            #Rows for true true
+    list2 = [row for row in rows if not splittingFunction(row)]                        #Rows for false false
     return (list1, list2)
 
 
@@ -70,7 +70,7 @@ def tpfn(rows):
     fn = len(rows)-tp
     return tp, fn
 
-def steps(rows, step, evaluationFunction=entropy):
+def steps(rows, step, evaluationFunction=entropy):                           #function gets called if step=2
     
     if len(rows) == 0: return 0
     currentScore = evaluationFunction(rows)
@@ -101,7 +101,7 @@ def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy
     if len(rows) == 0: return DecisionTree()
     currentScore = evaluationFunction(rows)
     bestGain = 0.0
-    bestAttribute = None
+    bestAttribute = None 
     bestSets = None
     columnCount = len(rows[0]) - 1  # last column is the result/target column
     recoms = []
@@ -173,8 +173,8 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
     column_diversity, table_diversity, step = parameters
     currentScore = evaluationFunction(rows)
     bestGain = 0.0
-    bestAttribute = None
-    bestSets = None
+    bestAttribute = None            #Saves the variable index/column
+    bestSets = None                 #Saves True and False branch rows for the best column
     columnCount = len(rows[0]) - 1  # last column is the result/target column
     recoms = []
     
@@ -220,7 +220,7 @@ def Frequency(rows, node_number, columns, parameters, dictionary):
     cons = [row[-1] for row in rows]
     recoms = []
     
-    parents = []
+    parents = []                                             #Savex parent node variable index
     x = [node_number]
     for i in x:
         if i == 1:
@@ -232,7 +232,7 @@ def Frequency(rows, node_number, columns, parameters, dictionary):
     
     for col in range(cols):                                      #Loop through all the columns                         
         
-        if col in parents:
+        if col in parents:                                       #Check if column/variable is already present in the path
             continue
         tp, fn = 0, 0
         row = [row[col] for row in rows]
@@ -241,6 +241,7 @@ def Frequency(rows, node_number, columns, parameters, dictionary):
                 tp+=1
             elif row[i] == 1 and cons[i] == 0:
                 fn+=1
+                
         if tp <= 1:
             recoms.append((columns[col], col, tp, fn, fn))
             continue
@@ -313,7 +314,7 @@ def PROCESS(antecedents, consequent, params, ref):
     global columns
     global parameters
     global seen
-    seen = {}
+    seen = {}                           #saves node number - variable relation, which is helpful in avoiding repeated recommendations
     dictionary = {}
     
     data = {'OPER': operdata, 'RCG': rcgdata, 'GRIT': gritdata, 'RCR': rcrdata}
