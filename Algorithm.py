@@ -20,11 +20,11 @@ class DecisionTree:
 def divideSet(rows, column, value):
     splittingFunction = None
     if isinstance(value, int) or isinstance(value, float): # for int and float values
-        splittingFunction = lambda row : row[column] >= value                          #check if col = 1 or 0 and split the rows accordingly
+        splittingFunction = lambda row : row[column] >= value
     else: # for strings
         splittingFunction = lambda row : row[column] == value
-    list1 = [row for row in rows if splittingFunction(row)]                            #Rows for true true
-    list2 = [row for row in rows if not splittingFunction(row)]                        #Rows for false false
+    list1 = [row for row in rows if splittingFunction(row)]
+    list2 = [row for row in rows if not splittingFunction(row)]
     return (list1, list2)
 
 
@@ -70,7 +70,7 @@ def tpfn(rows):
     fn = len(rows)-tp
     return tp, fn
 
-def steps(rows, step, evaluationFunction=entropy):                           #function gets called if step=2
+def steps(rows, step, evaluationFunction=entropy):
     
     if len(rows) == 0: return 0
     currentScore = evaluationFunction(rows)
@@ -101,7 +101,7 @@ def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy
     if len(rows) == 0: return DecisionTree()
     currentScore = evaluationFunction(rows)
     bestGain = 0.0
-    bestAttribute = None 
+    bestAttribute = None
     bestSets = None
     columnCount = len(rows[0]) - 1  # last column is the result/target column
     recoms = []
@@ -146,8 +146,8 @@ def diversity(recommendation, column_thresh, table_thresh):
     
     if (table_thresh == 0 or table_thresh >5) and (column_thresh == 0 or column_thresh >= 5):
         return recommendation[:5]
-    column = pd.read_csv('0204Raw.csv').columns[1:] #Reading columns from raw file
-    column_seen = {i: 0 for i in column}            #Keeps counter for column seen
+    
+    column_seen = {i: 0 for i in raw_column}        #Keeps counter for column seen
     table = ['OPER', 'RCG', 'GRIT', 'RCR']
     table_seen = {i: 0 for i in table}              #Keeps counter for table seen
     
@@ -159,7 +159,7 @@ def diversity(recommendation, column_thresh, table_thresh):
                 if table_seen[t] > table_thresh:
                     break
                 table_seen[t]+=1
-                for c in column:
+                for c in raw_column:
                     if re.search(c, variable):      #Check column name in variable
                         if column_seen[c]>column_thresh:
                             break
@@ -173,8 +173,8 @@ def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
     column_diversity, table_diversity, step = parameters
     currentScore = evaluationFunction(rows)
     bestGain = 0.0
-    bestAttribute = None            #Saves the variable index/column
-    bestSets = None                 #Saves True and False branch rows for the best column
+    bestAttribute = None
+    bestSets = None
     columnCount = len(rows[0]) - 1  # last column is the result/target column
     recoms = []
     
@@ -220,7 +220,7 @@ def Frequency(rows, node_number, columns, parameters, dictionary):
     cons = [row[-1] for row in rows]
     recoms = []
     
-    parents = []                                             #Savex parent node variable index
+    parents = []
     x = [node_number]
     for i in x:
         if i == 1:
@@ -232,7 +232,7 @@ def Frequency(rows, node_number, columns, parameters, dictionary):
     
     for col in range(cols):                                      #Loop through all the columns                         
         
-        if col in parents:                                       #Check if column/variable is already present in the path
+        if col in parents:
             continue
         tp, fn = 0, 0
         row = [row[col] for row in rows]
@@ -241,7 +241,6 @@ def Frequency(rows, node_number, columns, parameters, dictionary):
                 tp+=1
             elif row[i] == 1 and cons[i] == 0:
                 fn+=1
-                
         if tp <= 1:
             recoms.append((columns[col], col, tp, fn, fn))
             continue
@@ -314,11 +313,21 @@ def PROCESS(antecedents, consequent, params, ref):
     global columns
     global parameters
     global seen
-    seen = {}                           #saves node number - variable relation, which is helpful in avoiding repeated recommendations
+    global raw_column
+    
+    #Reading raw file column names
+    grit_raw_column = pd.read_csv('0204Raw.csv').columns[1:]
+    rcr_raw_column = []
+    oper_raw_column = []
+    rcg_raw_column = []
+    
+    seen = {}
     dictionary = {}
     
-    data = {'OPER': operdata, 'RCG': rcgdata, 'GRIT': gritdata, 'RCR': rcrdata}
-    bindata = data[ref]
+    data = {'OPER': [operdata, []], 'RCG': [rcgdata, []], 'GRIT': [gritdata, grit_raw_column], 'RCR': [rcrdata, []]}
+    bindata = data[ref][0]
+    raw_column = data[ref][1]
+    
     parameters = params
     columns = bindata.columns
     #AND operation on antecedents
@@ -332,4 +341,4 @@ def PROCESS(antecedents, consequent, params, ref):
     
     bindata = [[int(i) for i in bindata.iloc[j].tolist()] for j in range(len(bindata))]
     dictionary[1] = bindata
-    return 1
+    return 1, columns
