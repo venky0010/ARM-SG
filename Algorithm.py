@@ -155,18 +155,16 @@ def diversity(recommendation, column_thresh, table_thresh):
     for index in recommendation:
         variable = index[0]
         for t in table:
-            if re.search(t, variable):              #Check table name in variable
-                if table_seen[t] > table_thresh:
-                    break
-                table_seen[t]+=1
+            if re.search(str(t)+'$', variable):
                 for c in raw_column:
-                    if re.search(c, variable):      #Check column name in variable
-                        if column_seen[c]>column_thresh:
-                            break
-                        column_seen[c]+=1
-                        recos.append(index)
-                        if len(recos)==5:
-                            return recos
+                    if re.search(c, variable):
+                        if table_seen[t]<table_thresh and column_seen[c]<column_thresh:
+                            table_seen[t]+=1
+                            column_seen[c]+=1
+                            recos.append(index)
+                            if len(recos) == 5:
+                                return recos
+    return recos
                                                 
 def Entropy_(rows, dictionary, columns, parameters, evaluationFunction=entropy):
     
