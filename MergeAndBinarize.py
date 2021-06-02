@@ -126,6 +126,7 @@ for column in data.columns[27:]:
         val = data.loc[i, column]
         if type(val) == list:
             val = val[0]
+        data.loc[i, column] = val
             
 #Binarize the file
 import re
