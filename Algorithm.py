@@ -123,11 +123,10 @@ def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy
                 bestAttribute = (col, value)
                 bestSets = (set1, set2)
                 
-    seen[node_number] = bestAttribute[0]          
     tp, fn = tpfn(rows)
     dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
     if bestGain > 0:
-
+        seen[node_number] = bestAttribute[0]   
         nn1 = 2*node_number
         nn2 = 2*node_number+1
         dictionary[nn1]=bestSets[0]
