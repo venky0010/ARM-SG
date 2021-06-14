@@ -125,6 +125,7 @@ def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy
                 
     tp, fn = tpfn(rows)
     dcY = {'TP' : '%d' % tp, 'FN' : '%d' % fn}
+    
     if bestGain > 0:
         seen[node_number] = bestAttribute[0]   
         nn1 = 2*node_number
@@ -138,6 +139,8 @@ def Fast_Forward(node_number, parameters, dictionary, evaluationFunction=entropy
                             falseBranch=falseBranch, summary=dcY)
     else:
         return DecisionTree(results=uniqueCounts(rows), summary=dcY)
+    
+    return DecisionTree(results=uniqueCounts(rows), summary=dcY)
       
 
 #Frequency, Entropy, Diversity Starts here
