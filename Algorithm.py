@@ -330,19 +330,24 @@ def PROCESS(antecedents, consequent, params, ref):
     parameters = params
     columns = bindata.columns
     #AND operation on antecedents
-    ant = data[antecedents[0]].tolist()
+    ant = bindata[antecedents[0]].tolist()
     for i in antecedents:
-        ant2 = data[i].tolist()
+        ant2 = bindata[i].tolist()
         ant = [ant[j]*ant2[j] for j in range(len(ant))]
         
-    data['ANTECEDENTS'] = ant
-    bindata = bindata[bindata['ANTECEDENTS] == 1]
+    bindata['ANTECEDENTS'] = ant
+    bindata = bindata[bindata['ANTECEDENTS'] == 1]
     del bindata['ANTECEDENTS']
     
     #Setting consequent as the last column
     cons = bindata[consequent[0]].tolist()
-    del bindata[consequent[0]]
-    bindata[consequent[0]] = cons
+    for i in consequent:
+        cons2 = bindata[i].tolist()
+        cons = [cons[j]*cons2[j] for j in range(len(cons))]
+    
+    c = ''
+    for i in consequent:
+        c = c+'_'+str(i)
     
     bindata = [[int(i) for i in bindata.iloc[j].tolist()] for j in range(len(bindata))]
     dictionary[1] = bindata
